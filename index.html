@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Rutt's WLA Schedule — Wed Nov 18, 2026</title>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js"></script>
+<style>
+:root {
+  --bg: #f4f1ea;
+  --ink: #1a1814;
+  --muted: #5c574e;
+  --card: #fffdf8;
+  --line: #d9d2c5;
+  --run: #1f4b6e;
+  --now: #c1121f;
+  --conflict: #9b1c1c;
+  --conflict-bg: #fde8e8;
+  --green: #d8f3e0;
+  --green-b: #1b7a45;
+  --yellow: #fff0c2;
+  --yellow-b: #a15c00;
+  --red: #fde2e2;
+  --red-b: #b42318;
+  --unreleased: #6b6560;
+  --drop: #ece7df;
+  --ok: #1b7a45;
+  --shadow: 0 1px 3px rgba(40,30,10,.12);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink);
+  font: 16px/1.35 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+body { padding: 10px 10px 28px; }
+h1 { font-size: 1.25rem; margin: 0 0 4px; letter-spacing: -0.02em; }
+h2 { font-size: .95rem; margin: 0; }
+.muted { color: var(--muted); }
+.small { font-size: .86rem; }
+.tiny { font-size: .78rem; color: var(--muted); }
+a { color: #154a7a; }
+header.top { background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+  padding: 12px 14px; box-shadow: var(--shadow); margin-bottom: 10px; }
+.kicker { font-size: .78rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--run); }
+.kitchen { margin: 4px 0 8px; font-size: .95rem; }
+.meta-row { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: baseline; }
+.now-pill { background: #1a1814; color: #fff; font-weight: 700; padding: 4px 10px; border-radius: 999px; font-size: .95rem; }
+.banner { border-radius: 10px; padding: 10px 12px; margin: 8px 0; font-weight: 650; }
+.banner.proposed { background: #fff4d6; border: 2px solid #c4841a; }
+.banner.conflict { background: var(--conflict-bg); border: 2px solid var(--conflict); color: var(--conflict); }
+.banner.conflict .c-item { display: block; margin: 2px 0; }
+.banner.note { background: #eaf2fa; border: 1px solid #9bb8d3; font-weight: 500; }
+.legend, .model, .discrep, .totals, .actions { background: var(--card); border: 1px solid var(--line);
+  border-radius: 10px; padding: 10px 12px; margin: 8px 0; }
+.legend span.swatch { display: inline-block; width: 14px; height: 14px; border-radius: 3px;
+  border: 2px solid; vertical-align: -2px; margin-right: 4px; }
+.swatch.g { background: var(--green); border-color: var(--green-b); }
+.swatch.y { background: var(--yellow); border-color: var(--yellow-b); }
+.swatch.r { background: var(--red); border-color: var(--red-b); }
+.swatch.u { background: repeating-linear-gradient(45deg,#eee,#eee 4px,#ccc 4px,#ccc 8px); border-color: var(--unreleased); }
+.totals { display: grid; gap: 6px; }
+.totals .day { font-size: 1.05rem; font-weight: 700; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+button, .btn { appearance: none; border: 1px solid #8a8378; background: #fff; color: var(--ink);
+  font: inherit; font-weight: 650; padding: 10px 12px; border-radius: 8px; min-height: 44px; cursor: pointer; }
+button.primary { background: var(--run); color: #fff; border-color: var(--run); }
+button.danger { background: #fff; color: var(--conflict); border-color: var(--conflict); }
+button:disabled { opacity: .45; cursor: not-allowed; }
+button.sm, select.sm { min-height: 40px; padding: 6px 8px; font-size: .86rem; }
+.timeline-wrap { background: #1a1814; color: #f6f1e8; border-radius: 12px; padding: 8px 8px 10px; margin: 10px 0; overflow-x: auto; }
+.timeline-label { font-size: .75rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
+  color: #cfc6b6; padding: 2px 6px 6px; }
+.timeline { position: relative; min-width: 520px; }
+.t-hours { position: relative; height: 18px; margin-left: 52px; }
+.t-hours span { position: absolute; transform: translateX(-50%); font-size: .7rem; color: #cfc6b6; }
+.t-rows { position: relative; margin-left: 52px; }
+.t-row { position: relative; height: 22px; border-bottom: 1px solid #3a3530; }
+.t-name { position: absolute; left: -52px; top: 0; width: 50px; font-size: .72rem; font-weight: 700;
+  line-height: 22px; color: #e8e0d4; }
+.t-bar { position: absolute; top: 4px; height: 14px; border-radius: 4px; background: #3d7ab0; min-width: 4px; }
+.t-bar.conflict { background: #e23d3d; }
+.t-bar.unknown { background: repeating-linear-gradient(90deg,#5a6670,#5a6670 6px,#3d4650 6px,#3d4650 12px); }
+.t-due { position: absolute; top: 2px; width: 0; height: 18px; border-left: 2px solid #f5d36b; }
+.t-now { position: absolute; top: 0; bottom: 0; width: 0; border-left: 2px dashed var(--now); z-index: 3; }
+.t-now::after { content: "NOW"; position: absolute; top: -14px; left: 3px; font-size: .65rem; color: #ff8a8a; font-weight: 700; }
+.board { display: grid; grid-template-columns: repeat(6, minmax(260px, 1fr)); gap: 10px; margin-top: 10px; }
+@media (max-width: 900px) {
+  .board { grid-template-columns: 1fr; }
+  .timeline { min-width: 360px; }
+}
+.lane { background: var(--card); border: 2px solid var(--line); border-radius: 12px; display: flex;
+  flex-direction: column; min-height: 200px; }
+.lane.conflict { border-color: var(--conflict); background: #fff8f8; }
+.lane.unrouted { border-style: dashed; }
+.lane.dropped { background: var(--drop); }
+.lane-head { padding: 10px 10px 8px; border-bottom: 1px solid var(--line); }
+.lane-head h2 { font-size: 1.05rem; }
+.lane-times { margin: 6px 0; font-size: .92rem; }
+.lane-times .ret { font-weight: 700; }
+.lane-times .bad { color: var(--conflict); font-weight: 800; }
+.edits { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 6px; }
+.edits label { display: flex; flex-direction: column; gap: 2px; font-size: .75rem; font-weight: 700;
+  color: var(--muted); text-transform: uppercase; }
+.edits input { font: inherit; font-size: .9rem; font-weight: 600; padding: 6px; min-height: 40px;
+  border: 1px solid #b5aea3; border-radius: 6px; }
+.run-totals { font-size: .88rem; margin-top: 4px; }
+.conflict-msg { margin-top: 6px; color: var(--conflict); font-weight: 800; font-size: .88rem; }
+.cards { padding: 8px; min-height: 80px; flex: 1; display: flex; flex-direction: column; gap: 8px; }
+.card { background: #fff; border: 3px solid #999; border-radius: 10px; padding: 8px 8px 6px;
+  box-shadow: var(--shadow); touch-action: manipulation; }
+.card.tier-green { background: var(--green); border-color: var(--green-b); }
+.card.tier-yellow { background: var(--yellow); border-color: var(--yellow-b); }
+.card.tier-red { background: var(--red); border-color: var(--red-b); }
+.card.unreleased { border: 3px dashed var(--unreleased);
+  background: repeating-linear-gradient(45deg,#f3f1ee,#f3f1ee 8px,#e4e0da 8px,#e4e0da 16px); }
+.card.pinned { box-shadow: inset 0 0 0 2px #1a1814; }
+.card .oid { font-weight: 800; font-size: 1.02rem; }
+.card .cust { font-weight: 700; margin-top: 1px; }
+.card .addr { font-size: .9rem; margin: 2px 0; }
+.card .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 8px; font-size: .9rem; margin-top: 4px; }
+.card .grid b { font-weight: 800; }
+.card .flags { margin-top: 4px; font-size: .8rem; font-weight: 700; color: #6a3a00; }
+.card .handle { float: right; cursor: grab; font-size: 1.2rem; padding: 4px 6px; color: #444; user-select: none; }
+.card-actions { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+.sortable-ghost { opacity: .4; }
+.sortable-drag { transform: rotate(1deg); }
+footer { margin: 14px 4px 40px; font-size: .8rem; color: var(--muted); }
+#test-results { display: none; white-space: pre-wrap; background: #111; color: #c6ffc6;
+  padding: 8px; border-radius: 8px; font-family: ui-monospace, monospace; font-size: 12px; }
+.discrep details summary { cursor: pointer; font-weight: 700; }
+.discrep li { margin: 4px 0; }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="kicker">GigProof schedule board · v1.0.0</div>
+  <h1>Rutt's Hawaiian Cafe West LA — Wednesday, Nov 18, 2026</h1>
+  <div class="kitchen"><strong>Kitchen hub:</strong> Rutt's Hawaiian Cafe & Catering West LA, 11707 Washington Pl, Los Angeles 90066, (310) 398-6326</div>
+  <div class="meta-row">
+    <span class="now-pill" id="nowPill">NOW —</span>
+    <span class="muted small">Times in America/Los_Angeles (PT)</span>
+  </div>
+</header>
+
+<div class="banner proposed" id="proposedBanner">Run 4 orders PROPOSED to Jeff Bueker, not confirmed</div>
+<div class="banner conflict" id="conflictBanner" hidden></div>
+<div class="banner note">Kitchen return times are an <strong>estimate from Chet's run durations, not live ETA</strong>. No routing was computed. A run's leave = max(its ready time, previous run's return) + 15 min, unless you override. Return = leave + (that run's per-stop baseline × current stop count). Run 4 has no duration from Chet, so its return stays UNKNOWN until you enter minutes.</div>
+
+<section class="legend">
+  <strong>Value colors (this board's choice, not Chet's):</strong>
+  <div><span class="swatch g"></span>Green = top tip, tip ≥ $40 (today: #015104 $65.88, #015010 $45.45)</div>
+  <div><span class="swatch y"></span>Yellow = mid, tip $20–$39.99</div>
+  <div><span class="swatch r"></span>Red = low tip or tip NOT PRINTED / MISSING</div>
+  <div><span class="swatch u"></span>Hatched / dashed = unreleased Expedite (cannot release today)</div>
+</section>
+
+<section class="totals" id="dayTotals"></section>
+
+<section class="actions">
+  <button type="button" class="primary" id="btnReset">Reset to default</button>
+  <button type="button" id="btnExport">Export JSON</button>
+  <span class="tiny">Layout is chronological by due time until you drag. Moves and overrides save in this phone's browser (localStorage).</span>
+</section>
+
+<div class="timeline-wrap">
+  <div class="timeline-label">Day strip 6:30 AM – 2:00 PM · leave→return bars · gold ticks = due times · not live ETA</div>
+  <div class="timeline" id="timeline"></div>
+</div>
+
+<div class="board" id="board"></div>
+
+<section class="discrep">
+  <details open>
+    <summary>State-file discrepancies (board keeps Chet's 07:37 figures — nothing below was used to change a block)</summary>
+    <p class="small">Read <code>gigproof-orders-state.json</code> Drive 1sTfiV6nY7xrySeKcUv1_4xISlSDerS3M. The file's own stamp is <strong>2026-11-18 07:04 PT</strong>, later than the 5:42 AM PT check named in the brief. The live board URL in that file included an access key; it is <strong>not</strong> printed here.</p>
+    <ol class="small">
+      <li><strong>#015104 and #014809 status:</strong> Chet: PROPOSED to Jeff Bueker, not confirmed. State file: “Confirmed/Locked: Jeff Bueker (waiting Accept)” as of 6:15 AM.</li>
+      <li><strong>#015104 ready time:</strong> Chet: MISSING. State file: “ready 12:30 PM, by 12:30 PM”.</li>
+      <li><strong>#014338 ready time:</strong> Chet: Run 3 food ready 10:22 AM. State file: “ready 11:30 AM by 11:30 AM”. State also lists Confirmed: Noah Castaneda (accepted).</li>
+      <li><strong>ezCater #H1Q-H9U:</strong> Chet: not in route, flagged unreadable, excluded. State file: “Confirmed: Chet Stojanovich”, customer “CCPR (UCLA)”, by 11:00 AM PST. Customer name from the state file is not written onto the block.</li>
+      <li><strong>Orders in the state file that are not on this board</strong> (not in Chet's brief, so not added): #015041 Owen Sumter, UCLA Economics, ready 11:45 AM, Confirmed Chet, “Top tip”; #358821 CaterCow, Eric Lee, City of Los Angeles, by 8:30 AM–9:00 AM, Confirmed Chet.</li>
+      <li>State file lists order subtotals ($308.05 / $270.00) that Chet did not give; not used.</li>
+      <li>State file <code>current_view</code>: “10 orders: 0 need a driver, 0 proposed, 10 confirmed. Chet has 6 of a 12-order target.”</li>
+      <li>Expedite pickup at 7475 Beverly Blvd is not mentioned in the state file.</li>
+      <li>#015010 and #015265 are not in the state's <code>key_orders_nov18</code> array (the array looks partial — 7 entries).</li>
+    </ol>
+  </details>
+</section>
+
+<footer>
+  as of 2026-11-18 07:37 PT; source GigProof Orders Hourly Check / viability email Nov 17 6:45 PM PT; state file gigproof-orders-state.json Drive 1sTfiV6nY7xrySeKcUv1_4xISlSDerS3M checked 5:42 AM PT.
+  Laws: GigProof Immutable Laws v3.10.0 (300 laws; sha256 b8006ab96c45d6551581c139f7d0d1797e39f28a41c90ea2d42fe49650c4ca9d). Pointer in GIGPROOF_MASTER still names v3.10.0. No platform contact. Additive file GIGPROOF_RUTTS_WLA_SCHEDULE_BOARD__v1_0_0__2026-11-18.
+</footer>
+<pre id="test-results"></pre>
+
+<script>
+(function () {
+  const TZ = "America/Los_Angeles";
+  const START = 6 * 60 + 30;
+  const END = 14 * 60;
+  const STORAGE_KEY = "gigproof-rutts-wla-board-2026-11-18-v1";
+  const params = new URLSearchParams(location.search);
+  const fresh = params.has("fresh") || params.has("test");
+
+  const LANES = [
+    { id: "run1", title: "Run 1", kind: "run", n: 1 },
+    { id: "run2", title: "Run 2", kind: "run", n: 2 },
+    { id: "run3", title: "Run 3", kind: "run", n: 3 },
+    { id: "run4", title: "Run 4", kind: "run", n: 4 },
+    { id: "unrouted", title: "Unrouted / flagged", kind: "unrouted" },
+    { id: "dropped", title: "Dropped", kind: "dropped" }
+  ];
+
+  const RUN_BASE = {
+    1: { origDuration: 76, origStops: 1, perStop: 76, origReady: 7 * 60 + 4, origLeave: 7 * 60 + 19, origBack: 8 * 60 + 35, miles: 8.4 },
+    2: { origDuration: 73, origStops: 1, perStop: 73, origReady: 8 * 60 + 54, origLeave: 9 * 60 + 9, origBack: 10 * 60 + 22, miles: 9.5 },
+    3: { origDuration: 134, origStops: 2, perStop: 67, origReady: 10 * 60 + 22, origLeave: 10 * 60 + 37, origBack: 12 * 60 + 51, miles: 13.6 },
+    4: { origDuration: null, origStops: 2, perStop: null, origReady: null, origLeave: null, origBack: null, miles: null }
+  };
+
+  const DEFAULT_ORDERS = [
+    { id: "015086", label: "#015086", customer: "Ana Fuentes People Inc",
+      address: "1041 N Formosa Ave, West Hollywood 90046", due: 8 * 60, fee: 45, tip: 20, total: 65, totalPlus: false,
+      bags: 1, bagsApprox: true, bagsNote: null, ready: 7 * 60 + 4, lane: "run1",
+      flags: [], proposed: false, confirmedNoah: false, unreleased: false },
+    { id: "015010", label: "#015010", customer: "Rolando Lira, West Hollywood Community Housing",
+      address: "1260 N Harper Ave, West Hollywood 90046", due: 10 * 60 + 30, fee: 44, tip: 45.45, total: 89.45, totalPlus: false,
+      bags: 1, bagsApprox: true, bagsNote: null, ready: 8 * 60 + 54, lane: "run2",
+      flags: [], proposed: false, confirmedNoah: false, unreleased: false },
+    { id: "014338", label: "#014338", customer: "Mario Franco SMC",
+      address: "3171 S Bundy Dr #417, Los Angeles 90066", due: 11 * 60 + 30, fee: 25, tip: null, total: 25, totalPlus: true,
+      bags: 7, bagsApprox: true, bagsNote: "half value", ready: 10 * 60 + 22, lane: "run3",
+      flags: ["Tip NOT PRINTED"], proposed: false, confirmedNoah: true, unreleased: false },
+    { id: "015265", label: "#015265", customer: null,
+      address: "611 Charles E Young Dr E, Los Angeles 90095", due: 12 * 60, fee: 25, tip: 25, total: 50, totalPlus: false,
+      bags: null, bagsApprox: false, bagsNote: null, ready: 10 * 60 + 22, lane: "run3",
+      flags: ["Street-level geocode only, miles may be off", "Customer name MISSING", "Bags MISSING"],
+      proposed: false, confirmedNoah: false, unreleased: false },
+    { id: "015104", label: "#015104", customer: "Xixi Hu",
+      address: "1640 S Sepulveda Blvd #204, Los Angeles 90025", due: 12 * 60 + 30, fee: 28, tip: 65.88, total: 93.88, totalPlus: false,
+      bags: null, bagsApprox: false, bagsNote: null, ready: null, lane: "run4",
+      flags: ["Top tip", "Ready MISSING", "Bags MISSING", "Previously confirmed with Noah", "PROPOSED to Jeff Bueker, not confirmed"],
+      proposed: true, confirmedNoah: true, unreleased: false },
+    { id: "014809", label: "#014809", customer: "Aridae Aridae",
+      address: "1424 Lincoln Blvd, Santa Monica 90401", due: 12 * 60 + 30, fee: 30, tip: 27, total: 57, totalPlus: false,
+      bags: null, bagsApprox: false, bagsNote: null, ready: null, lane: "run4",
+      flags: ["Ready MISSING", "Bags MISSING", "Previously confirmed with Noah", "PROPOSED to Jeff Bueker, not confirmed"],
+      proposed: true, confirmedNoah: true, unreleased: false },
+    { id: "H1Q-H9U", label: "ezCater #H1Q-H9U", customer: null,
+      address: "337 Charles E Young Dr E, Los Angeles 90095", due: 11 * 60, window: "10:45–11:00 AM",
+      fee: null, tip: null, total: null, totalPlus: false,
+      bags: null, bagsApprox: false, bagsNote: null, ready: null, lane: "unrouted",
+      flags: ["NOT IN ROUTE", "Deliver-by 11:00 AM (window 10:45–11:00 AM)", "Order Desk viability email could not parse its time string — flagged unreadable, excluded", "Fee, tip, bags, customer MISSING", "Chet: check the board https://gigproof-orders.macaly.app/board"],
+      proposed: false, confirmedNoah: false, unreleased: false },
+    { id: "EXPEDITE-BEVERLY", label: "Expedite pickup", customer: null,
+      address: "7475 Beverly Blvd, Los Angeles 90036", due: null, fee: null, tip: null, total: null, totalPlus: false,
+      bags: null, bagsApprox: false, bagsNote: null, ready: null, lane: "unrouted",
+      flags: ["UNRELEASED — Chet cannot release this today", "0.7 mi from current location, adds ~2 min (Chet's figures)", "Value and time MISSING"],
+      proposed: false, confirmedNoah: false, unreleased: true }
+  ];
+
+  function cloneDefault() {
+    return {
+      orders: DEFAULT_ORDERS.map(function (o) { return Object.assign({ pinned: false }, o); }),
+      overrides: { 1: {}, 2: {}, 3: {}, 4: {} }
+    };
+  }
+
+  let state = cloneDefault();
+
+  function parseSaved() {
+    if (fresh) return;
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      const s = JSON.parse(raw);
+      if (!s || !Array.isArray(s.orders)) return;
+      const byId = {};
+      s.orders.forEach(function (o) { byId[o.id] = o; });
+      state = cloneDefault();
+      state.orders.forEach(function (o) {
+        const p = byId[o.id];
+        if (!p) return;
+        if (typeof p.lane === "string") o.lane = p.lane;
+        o.pinned = !!p.pinned;
+        if (typeof p.ord === "number") o.ord = p.ord;
+      });
+      state.orders.sort(function (a, b) { return (a.ord || 0) - (b.ord || 0); });
+      if (s.overrides) state.overrides = Object.assign({ 1: {}, 2: {}, 3: {}, 4: {} }, s.overrides);
+    } catch (e) {}
+  }
+
+  function persist() {
+    state.orders.forEach(function (o, i) { o.ord = i; });
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ orders: state.orders, overrides: state.overrides })); } catch (e) {}
+  }
+
+  function pad(n) { return String(n).padStart(2, "0"); }
+
+  function fmt(min) {
+    if (min == null || Number.isNaN(min)) return "UNKNOWN";
+    min = Math.round(min);
+    var day = "";
+    if (min < 0 || min >= 24 * 60) {
+      var days = Math.floor(min / (24 * 60));
+      min = ((min % (24 * 60)) + 24 * 60) % (24 * 60);
+      if (days) day = " +" + days + "d";
+    }
+    var h = Math.floor(min / 60), m = min % 60;
+    var ampm = h >= 12 ? "PM" : "AM";
+    var h12 = h % 12; if (h12 === 0) h12 = 12;
+    return h12 + ":" + pad(m) + " " + ampm + day;
+  }
+
+  function money(n, plus) {
+    if (n == null) return "MISSING";
+    var s = Number.isInteger(n) ? "$" + n : "$" + n.toFixed(2);
+    return plus ? s + "+" : s;
+  }
+
+  function bagsLabel(o) {
+    if (o.bags == null) return "MISSING";
+    var s = (o.bagsApprox ? "~" : "") + o.bags + (o.bags === 1 ? " bag" : " bags");
+    if (o.bagsNote) s += " (" + o.bagsNote + ")";
+    return s;
+  }
+
+  function tier(o) {
+    if (o.tip == null) return "red";
+    if (o.tip >= 40) return "green";
+    if (o.tip >= 20) return "yellow";
+    return "red";
+  }
+
+  function nowMinutes() {
+    var parts = new Intl.DateTimeFormat("en-US", { timeZone: TZ, hour: "numeric", minute: "numeric", hour12: false }).formatToParts(new Date());
+    var h = 0, m = 0;
+    parts.forEach(function (p) { if (p.type === "hour") h = +p.value; if (p.type === "minute") m = +p.value; });
+    if (h === 24) h = 0;
+    return h * 60 + m;
+  }
+
+  function nowLabel() {
+    return new Intl.DateTimeFormat("en-US", { timeZone: TZ, hour: "numeric", minute: "2-digit", second: "2-digit", hour12: true }).format(new Date()) + " PT";
+  }
+
+  function laneOrders(lane) {
+    return state.orders.filter(function (o) { return o.lane === lane; });
+  }
+
+  function runReady(n, orders) {
+    var ready = null;
+    orders.forEach(function (o) {
+      if (o.ready != null) ready = ready == null ? o.ready : Math.max(ready, o.ready);
+    });
+    return ready;
+  }
+
+  function compute() {
+    var runs = { 1: null, 2: null, 3: null, 4: null };
+    var prevReturn = null;
+    var prevKnown = true;
+    for (var n = 1; n <= 4; n++) {
+      var orders = laneOrders("run" + n);
+      var ov = state.overrides[n] || {};
+      var base = RUN_BASE[n];
+      var ready = runReady(n, orders);
+      var leave = null;
+      var leaveNote = "";
+      if (ov.leave != null && ov.leave !== "") {
+        leave = +ov.leave;
+        leaveNote = "override";
+      } else if (orders.length === 0) {
+        leave = null;
+        leaveNote = "empty";
+      } else if (ready != null && prevReturn != null && prevKnown) {
+        leave = Math.max(ready, prevReturn) + 15;
+        leaveNote = "max(ready " + fmt(ready) + ", prior return " + fmt(prevReturn) + ") + 15";
+      } else if (ready != null && !prevKnown) {
+        leave = ready + 15;
+        leaveNote = "ready " + fmt(ready) + " + 15 (prior return UNKNOWN)";
+      } else if (ready != null) {
+        leave = ready + 15;
+        leaveNote = "ready " + fmt(ready) + " + 15";
+      } else if (prevReturn != null && prevKnown) {
+        leave = prevReturn + 15;
+        leaveNote = "prior return " + fmt(prevReturn) + " + 15 (ready MISSING)";
+      } else {
+        leave = null;
+        leaveNote = "UNKNOWN (ready MISSING" + (!prevKnown ? ", prior return UNKNOWN" : ", no prior return") + ")";
+      }
+
+      var perStop = base.perStop;
+      var perStopNote = base.perStop != null
+        ? (base.origDuration + " min ÷ " + base.origStops + " original stop" + (base.origStops === 1 ? "" : "s") + " = " + base.perStop + " min/stop")
+        : "no duration from Chet";
+      if (ov.duration != null && ov.duration !== "" && orders.length > 0) {
+        perStop = (+ov.duration) / orders.length;
+        perStopNote = "override " + ov.duration + " min ÷ " + orders.length + " current stop" + (orders.length === 1 ? "" : "s") + " = " + (Math.round(perStop * 10) / 10) + " min/stop";
+      } else if (ov.duration != null && ov.duration !== "" && orders.length === 0) {
+        perStop = +ov.duration;
+        perStopNote = "override " + ov.duration + " min (empty run)";
+      }
+
+      var back = null;
+      var backNote = "";
+      if (orders.length === 0) {
+        back = leave;
+        backNote = "empty — no travel";
+      } else if (leave == null) {
+        back = null;
+        backNote = "UNKNOWN (leave UNKNOWN)";
+      } else if (perStop == null) {
+        back = null;
+        backNote = "UNKNOWN (no duration — enter minutes to estimate)";
+      } else {
+        back = leave + perStop * orders.length;
+        backNote = fmt(leave) + " + " + (Math.round(perStop * 10) / 10) + " × " + orders.length;
+      }
+
+      var fees = 0, tips = 0, totals = 0, bagSum = 0, tipMissing = 0, totalPlus = false, bagMissing = 0, bagApprox = false, feeMissing = 0;
+      orders.forEach(function (o) {
+        if (o.fee == null) feeMissing++; else fees += o.fee;
+        if (o.tip == null) tipMissing++; else tips += o.tip;
+        if (o.total == null) {} else totals += o.total;
+        if (o.totalPlus || o.tip == null) totalPlus = true;
+        if (o.bags == null) bagMissing++; else bagSum += o.bags;
+        if (o.bagsApprox) bagApprox = true;
+      });
+
+      var earliestDue = null;
+      orders.forEach(function (o) { if (o.due != null) earliestDue = earliestDue == null ? o.due : Math.min(earliestDue, o.due); });
+
+      runs[n] = {
+        n: n, orders: orders, ready: ready, leave: leave, leaveNote: leaveNote,
+        back: back, backNote: backNote, perStop: perStop, perStopNote: perStopNote,
+        fees: fees, tips: tips, totals: totals, tipMissing: tipMissing, totalPlus: totalPlus,
+        feeMissing: feeMissing, bagSum: bagSum, bagMissing: bagMissing, bagApprox: bagApprox,
+        earliestDue: earliestDue, empty: orders.length === 0, miles: base.miles, conflicts: []
+      };
+
+      if (!runs[n].empty) {
+        if (back != null) { prevReturn = back; prevKnown = true; }
+        else { prevReturn = leave; prevKnown = false; }
+      }
+    }
+
+    for (var n = 1; n <= 4; n++) {
+      var r = runs[n];
+      if (r.empty) continue;
+      if (r.leave != null) {
+        r.orders.forEach(function (o) {
+          if (o.due != null && r.leave > o.due) {
+            r.conflicts.push("Run " + n + " leave " + fmt(r.leave) + " > own due " + fmt(o.due));
+          }
+        });
+      }
+      var next = null;
+      for (var k = n + 1; k <= 4; k++) { if (!runs[k].empty) { next = runs[k]; break; } }
+      if (next && next.earliestDue != null) {
+        var cmp = r.back != null ? r.back : r.leave;
+        if (cmp != null && cmp > next.earliestDue) {
+          if (r.back != null) {
+            r.conflicts.push("Run " + n + " back " + fmt(r.back) + " > Run " + next.n + " due " + fmt(next.earliestDue));
+          } else {
+            r.conflicts.push("Run " + n + " leave " + fmt(r.leave) + " > Run " + next.n + " due " + fmt(next.earliestDue) + " (return UNKNOWN)");
+          }
+        }
+      }
+      r.conflicts = unique(r.conflicts);
+    }
+    return runs;
+  }
+
+  function unique(arr) {
+    var s = {}, out = [];
+    arr.forEach(function (x) { if (!s[x]) { s[x] = 1; out.push(x); } });
+    return out;
+  }
+
+  function pct(min) {
+    return ((min - START) / (END - START)) * 100;
+  }
+
+  function renderTimeline(runs) {
+    var hoursHtml = "";
+    for (var h = 7; h <= 14; h++) {
+      var m = h * 60;
+      hoursHtml += '<span style="left:' + pct(m) + '%">' + fmt(m).replace(" ", "\u00a0") + "</span>";
+    }
+    var rows = "";
+    for (var n = 1; n <= 4; n++) {
+      var r = runs[n];
+      var bars = "";
+      if (!r.empty && r.leave != null) {
+        var left = Math.max(START, r.leave);
+        var right = r.back != null ? r.back : Math.min(END, r.leave + 20);
+        var w = Math.max(0.8, pct(Math.min(END, right)) - pct(Math.max(START, r.leave)));
+        var cls = "t-bar" + (r.conflicts.length ? " conflict" : "") + (r.back == null ? " unknown" : "");
+        bars += '<div class="' + cls + '" style="left:' + pct(left) + '%;width:' + w + '%" title="leave ' + fmt(r.leave) + ' back ' + fmt(r.back) + '"></div>';
+      }
+      r.orders.forEach(function (o) {
+        if (o.due == null || o.due < START || o.due > END) return;
+        bars += '<div class="t-due" style="left:' + pct(o.due) + '%" title="' + o.label + ' due ' + fmt(o.due) + '"></div>';
+      });
+      rows += '<div class="t-row"><div class="t-name">Run ' + n + '</div>' + bars + "</div>";
+    }
+    var now = nowMinutes();
+    var nowEl = (now >= START && now <= END) ? '<div class="t-now" style="left:' + pct(now) + '%"></div>' : "";
+    document.getElementById("timeline").innerHTML = '<div class="t-hours">' + hoursHtml + "</div><div class=\"t-rows\">" + nowEl + rows + "</div>";
+  }
+
+  function sumKept() {
+    var fees = 0, tips = 0, totals = 0, bags = 0, tipMissing = 0, feeMissing = 0, bagMissing = 0, bagApprox = false, totalPlus = false, count = 0;
+    state.orders.forEach(function (o) {
+      if (o.lane === "dropped") return;
+      count++;
+      if (o.fee == null) feeMissing++; else fees += o.fee;
+      if (o.tip == null) tipMissing++; else tips += o.tip;
+      if (o.total != null) totals += o.total;
+      if (o.totalPlus || o.tip == null && o.total != null) totalPlus = true;
+      if (o.bags == null) bagMissing++; else bags += o.bags;
+      if (o.bagsApprox) bagApprox = true;
+    });
+    return { fees: fees, tips: tips, totals: totals, bags: bags, tipMissing: tipMissing, feeMissing: feeMissing, bagMissing: bagMissing, bagApprox: bagApprox, totalPlus: totalPlus, count: count };
+  }
+
+  function moneySum(n, missing, plus) {
+    var s = (Math.round(n * 100) / 100);
+    var t = Number.isInteger(s) ? "$" + s : "$" + s.toFixed(2);
+    if (plus) t += "+";
+    if (missing) t += " (" + missing + " MISSING/NOT PRINTED)";
+    return t;
+  }
+
+  function bagSum(n, approx, missing) {
+    var t = (approx ? "~" : "") + n;
+    if (missing) t += " + " + missing + " MISSING";
+    return t;
+  }
+
+  function renderDay(runs) {
+    var s = sumKept();
+    var conflicts = [];
+    for (var n = 1; n <= 4; n++) conflicts = conflicts.concat(runs[n].conflicts);
+    document.getElementById("dayTotals").innerHTML =
+      '<div class="day">Day total (kept, excluding Dropped): ' + s.count + " orders · fees " + moneySum(s.fees, s.feeMissing, false) +
+      " · tips " + moneySum(s.tips, s.tipMissing, false) + " · total " + moneySum(s.totals, 0, s.totalPlus) +
+      " · bags " + bagSum(s.bags, s.bagApprox, s.bagMissing) + "</div>" +
+      '<div class="tiny">Unprinted tips are not invented. #014338 total is $25+ and rolls into the day total as $25+.</div>';
+
+    var ban = document.getElementById("conflictBanner");
+    if (conflicts.length) {
+      ban.hidden = false;
+      ban.innerHTML = conflicts.map(function (c) { return '<span class="c-item">' + escapeHtml(c) + "</span>"; }).join("");
+    } else {
+      ban.hidden = true;
+      ban.innerHTML = "";
+    }
+    document.getElementById("nowPill").textContent = "NOW " + nowLabel();
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/&/g, "&").replace(/</g, "<").replace(/>/g, ">").replace(/"/g, """);
+  }
+
+  function timeInputValue(min) {
+    if (min == null) return "";
+    min = ((Math.round(min) % (24 * 60)) + 24 * 60) % (24 * 60);
+    return pad(Math.floor(min / 60)) + ":" + pad(min % 60);
+  }
+
+  function parseTimeInput(v) {
+    if (!v) return null;
+    var p = v.split(":");
+    return (+p[0]) * 60 + (+p[1]);
+  }
+
+  function cardHtml(o) {
+    var cls = "card tier-" + tier(o) + (o.unreleased ? " unreleased" : "") + (o.pinned ? " pinned" : "");
+    var flags = o.flags.map(function (f) { return escapeHtml(f); }).join(" · ");
+    var due = o.due != null ? fmt(o.due) + (o.window ? " (window " + o.window + ")" : "") : "MISSING";
+    var opts = LANES.map(function (l) {
+      return '<option value="' + l.id + '"' + (o.lane === l.id ? " selected" : "") + ">" + l.title + "</option>";
+    }).join("");
+    return '<article class="' + cls + '" data-id="' + escapeHtml(o.id) + '">' +
+      '<span class="handle" title="Drag">☰</span>' +
+      '<div class="oid">' + escapeHtml(o.label) + (o.pinned ? " 📌" : "") + "</div>" +
+      '<div class="cust">' + (o.customer ? escapeHtml(o.customer) : "Customer MISSING") + "</div>" +
+      '<div class="addr">' + escapeHtml(o.address) + "</div>" +
+      '<div class="grid">' +
+        "<div>Due <b>" + escapeHtml(due) + "</b></div>" +
+        "<div>Ready <b>" + (o.ready != null ? fmt(o.ready) : "MISSING") + "</b></div>" +
+        "<div>Fee <b>" + money(o.fee, false) + "</b></div>" +
+        "<div>Tip <b>" + (o.tip == null ? (o.id === "014338" ? "NOT PRINTED" : "MISSING") : money(o.tip, false)) + "</b></div>" +
+        "<div>Total <b>" + money(o.total, o.totalPlus) + "</b></div>" +
+        "<div>Bags <b>" + bagsLabel(o) + "</b></div>" +
+      "</div>" +
+      (flags ? '<div class="flags">' + flags + "</div>" : "") +
+      '<div class="card-actions">' +
+        '<button type="button" class="sm" data-act="pin">' + (o.pinned ? "Unpin" : "Keep / pin") + "</button>" +
+        '<button type="button" class="sm" data-act="up">Up</button>' +
+        '<button type="button" class="sm" data-act="down">Down</button>' +
+        '<select class="sm" data-act="move" aria-label="Move to">' + opts + "</select>" +
+        '<button type="button" class="sm danger" data-act="drop"' + (o.pinned ? " disabled" : "") + ">Drop</button>" +
+      "</div></article>";
+  }
+
+  function runTotalsLine(r) {
+    if (r.empty) return '<div class="run-totals muted">No orders</div>';
+    return '<div class="run-totals">' + r.orders.length + " order" + (r.orders.length === 1 ? "" : "s") +
+      " · fees " + moneySum(r.fees, r.feeMissing, false) +
+      " · tips " + moneySum(r.tips, r.tipMissing, false) +
+      " · total " + moneySum(r.totals, 0, r.totalPlus) +
+      " · bags " + bagSum(r.bagSum, r.bagApprox, r.bagMissing) +
+      (r.miles != null ? ' · original route ' + r.miles + " mi (not recalculated)" : "") +
+      "</div>";
+  }
+
+  function renderBoard() {
+    var runs = compute();
+    renderDay(runs);
+    renderTimeline(runs);
+    var html = "";
+    LANES.forEach(function (lane) {
+      var isRun = lane.kind === "run";
+      var r = isRun ? runs[lane.n] : null;
+      var conflict = isRun && r.conflicts.length;
+      var cls = "lane " + lane.kind + (conflict ? " conflict" : "");
+      var head = "<h2>" + lane.title + "</h2>";
+      if (isRun) {
+        var leaveShow = r.leave != null ? fmt(r.leave) : "UNKNOWN";
+        var backShow = r.empty ? "—" : (r.back != null ? fmt(r.back) : "UNKNOWN");
+        var readyShow = r.ready != null ? fmt(r.ready) : "MISSING";
+        head += '<div class="lane-times">Ready ' + readyShow +
+          " · Leave <span class=\"" + (conflict ? "bad" : "") + "\">" + leaveShow + "</span>" +
+          ' · Back <span class="ret' + (conflict ? " bad" : "") + '">' + backShow + "</span></div>";
+        if (!r.empty) head += '<div class="tiny">' + escapeHtml(r.leaveNote) + " · " + escapeHtml(r.backNote) + " · " + escapeHtml(r.perStopNote) + "</div>";
+        var ov = state.overrides[lane.n] || {};
+        head += '<div class="edits">' +
+          '<label>Leave override<input type="time" data-ov="leave" data-run="' + lane.n + '" value="' +
+            (ov.leave != null && ov.leave !== "" ? timeInputValue(ov.leave) : "") + '"></label>' +
+          '<label>Duration override (min)<input type="number" min="0" step="1" inputmode="numeric" data-ov="duration" data-run="' + lane.n +
+            '" placeholder="' + (RUN_BASE[lane.n].origDuration != null ? String(RUN_BASE[lane.n].origDuration) : "enter minutes") +
+            '" value="' + (ov.duration != null && ov.duration !== "" ? ov.duration : "") + '"></label></div>';
+        head += runTotalsLine(r);
+        if (conflict) head += '<div class="conflict-msg">' + r.conflicts.map(escapeHtml).join("<br>") + "</div>";
+        if (lane.n === 4) head += '<div class="tiny">Run 4 orders PROPOSED to Jeff Bueker, not confirmed</div>';
+      } else if (lane.kind === "unrouted") {
+        head += '<div class="tiny">Still kept in the day total until dropped. Drag into a run to include in kitchen-time estimates.</div>';
+      } else {
+        head += '<div class="tiny">Dropped orders are excluded from day totals and kitchen times. Pin an order to block accidental drop.</div>';
+      }
+      var cards = laneOrders(lane.id).map(cardHtml).join("");
+      html += '<section class="' + cls + '" data-lane="' + lane.id + '"><div class="lane-head">' + head +
+        '</div><div class="cards" id="cards-' + lane.id + '" data-lane="' + lane.id + '">' + cards + "</div></section>";
+    });
+    document.getElementById("board").innerHTML = html;
+    bind();
+    return runs;
+  }
+
+  var sortables = [];
+
+  function bind() {
+    sortables.forEach(function (s) { try { s.destroy(); } catch (e) {} });
+    sortables = [];
+    LANES.forEach(function (lane) {
+      var el = document.getElementById("cards-" + lane.id);
+      if (!el || typeof Sortable === "undefined") return;
+      sortables.push(Sortable.create(el, {
+        group: "orders",
+        handle: ".handle",
+        animation: 150,
+        delayOnTouchOnly: true,
+        delay: 120,
+        onEnd: function () {
+          var ids = [];
+          LANES.forEach(function (ln) {
+            document.querySelectorAll("#cards-" + ln.id + " .card").forEach(function (c) {
+              ids.push({ id: c.getAttribute("data-id"), lane: ln.id });
+            });
+          });
+          var byId = {};
+          state.orders.forEach(function (o) { byId[o.id] = o; });
+          var next = [];
+          ids.forEach(function (row) {
+            var o = byId[row.id];
+            if (!o) return;
+            if (row.lane === "dropped" && o.pinned) { row.lane = o.lane; }
+            o.lane = row.lane;
+            next.push(o);
+            delete byId[row.id];
+          });
+          Object.keys(byId).forEach(function (k) { next.push(byId[k]); });
+          state.orders = next;
+          persist();
+          renderBoard();
+        }
+      }));
+    });
+
+    document.querySelectorAll("[data-act]").forEach(function (btn) {
+      if (btn.tagName === "SELECT") {
+        btn.addEventListener("change", function () { act(btn.closest(".card").getAttribute("data-id"), "move", btn.value); });
+      } else {
+        btn.addEventListener("click", function () { act(btn.closest(".card").getAttribute("data-id"), btn.getAttribute("data-act")); });
+      }
+    });
+    document.querySelectorAll("[data-ov]").forEach(function (inp) {
+      inp.addEventListener("change", function () {
+        var n = +inp.getAttribute("data-run");
+        var kind = inp.getAttribute("data-ov");
+        state.overrides[n] = state.overrides[n] || {};
+        if (kind === "leave") {
+          var v = parseTimeInput(inp.value);
+          if (v == null) delete state.overrides[n].leave; else state.overrides[n].leave = v;
+        } else {
+          if (inp.value === "") delete state.overrides[n].duration; else state.overrides[n].duration = +inp.value;
+        }
+        persist();
+        renderBoard();
+      });
+    });
+  }
+
+  function act(id, kind, dest) {
+    var idx = -1, o = null;
+    state.orders.forEach(function (x, i) { if (x.id === id) { idx = i; o = x; } });
+    if (!o) return;
+    var same = state.orders.map(function (x, i) { return { x: x, i: i }; }).filter(function (r) { return r.x.lane === o.lane; });
+    var pos = same.findIndex(function (r) { return r.x.id === id; });
+    if (kind === "pin") o.pinned = !o.pinned;
+    else if (kind === "up" && pos > 0) {
+      var a = same[pos - 1].i;
+      var tmp = state.orders[a]; state.orders[a] = state.orders[idx]; state.orders[idx] = tmp;
+    } else if (kind === "down" && pos < same.length - 1) {
+      var b = same[pos + 1].i;
+      var tmp2 = state.orders[b]; state.orders[b] = state.orders[idx]; state.orders[idx] = tmp2;
+    } else if (kind === "move" && dest) {
+      if (dest === "dropped" && o.pinned) return;
+      o.lane = dest;
+    } else if (kind === "drop") {
+      if (o.pinned) return;
+      o.lane = "dropped";
+    }
+    persist();
+    renderBoard();
+  }
+
+  function moveTo(id, lane) {
+    act(id, "move", lane);
+    return compute();
+  }
+
+  document.getElementById("btnReset").addEventListener("click", function () {
+    if (!confirm("Reset all runs, pins, and time overrides to Chet's 07:37 default?")) return;
+    state = cloneDefault();
+    try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+    renderBoard();
+  });
+
+  document.getElementById("btnExport").addEventListener("click", function () {
+    var runs = compute();
+    var payload = {
+      as_of: "2026-11-18 07:37 PT",
+      sources: "GigProof Orders Hourly Check / viability email Nov 17 6:45 PM PT; state file gigproof-orders-state.json Drive 1sTfiV6nY7xrySeKcUv1_4xISlSDerS3M checked 5:42 AM PT",
+      model: "estimate from Chet's run durations, not live ETA",
+      orders: state.orders,
+      overrides: state.overrides,
+      runs: [1, 2, 3, 4].map(function (n) {
+        var r = runs[n];
+        return { n: n, leave: fmt(r.leave), back: fmt(r.back), leaveNote: r.leaveNote, backNote: r.backNote, perStopNote: r.perStopNote, conflicts: r.conflicts, totals: { fees: r.fees, tips: r.tips, total: r.totals, bags: r.bagSum, count: r.orders.length } };
+      }),
+      day: sumKept()
+    };
+    var blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "GIGPROOF_RUTTS_WLA_SCHEDULE_BOARD__v1_0_0__2026-11-18.json";
+    a.click();
+    URL.revokeObjectURL(a.href);
+  });
+
+  parseSaved();
+  var first = renderBoard();
+  setInterval(function () {
+    document.getElementById("nowPill").textContent = "NOW " + nowLabel();
+    renderTimeline(compute());
+  }, 15000);
+
+  window.__board = {
+    compute: compute,
+    moveTo: moveTo,
+    state: function () { return state; },
+    fmt: fmt,
+    baselineConflicts: function () { return compute()[3].conflicts.slice(); }
+  };
+
+  if (params.get("test") === "baseline" || params.get("test") === "drop-014338") {
+    var el = document.getElementById("test-results");
+    el.style.display = "block";
+    var r = compute();
+    var lines = [];
+    lines.push("BASELINE Run3 leave=" + fmt(r[3].leave) + " back=" + fmt(r[3].back));
+    lines.push("BASELINE conflicts=" + JSON.stringify(r[3].conflicts));
+    lines.push("HAS_EXACT=" + (r[3].conflicts.indexOf("Run 3 back 12:51 PM > Run 4 due 12:30 PM") >= 0));
+    if (params.get("test") === "drop-014338") {
+      var after = moveTo("014338", "dropped");
+      lines.push("AFTER Run3 leave=" + fmt(after[3].leave) + " back=" + fmt(after[3].back));
+      lines.push("AFTER Run3 conflicts=" + JSON.stringify(after[3].conflicts));
+      lines.push("AFTER Run4 conflicts=" + JSON.stringify(after[4].conflicts));
+      lines.push("BACK_IS_1144=" + (fmt(after[3].back) === "11:44 AM"));
+      lines.push("RUN3_TO_RUN4_CLEARED=" + (after[3].conflicts.every(function (c) { return c.indexOf("Run 4 due") < 0; })));
+    }
+    el.textContent = lines.join("\n");
+  }
+})();
+</script>
+</body>
+</html>
